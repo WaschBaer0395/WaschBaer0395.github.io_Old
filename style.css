@@ -1,11 +1,28 @@
-label {
-    display: block;
-    font:
-            1rem 'Fira Sans',
-            sans-serif;
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
 }
 
-input,
-label {
-    margin: 0.4rem 0;
+.container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    text-align: center;
+}
+
+input[type="file"] {
+    margin: 20px 0;
+}
+
+#output {
+    text-align: left;
+    margin-top: 20px;
 }
