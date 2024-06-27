@@ -6,7 +6,8 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(e.target.result, "text/xml");
             const keybinds = xmlToDict(xmlDoc);
-            displayKeybinds(keybinds);
+            const productNames = getProductNames(xmlDoc);
+            displayKeybinds(keybinds, productNames);
         };
         reader.readAsText(file);
     } else {
@@ -24,16 +25,54 @@ function xmlToDict(xml) {
             const rebinds = actions[j].getElementsByTagName('rebind');
             for (let k = 0; k < rebinds.length; k++) {
                 const input = rebinds[k].getAttribute('input');
-                keybinds[actionName] = input;
+                const match = input.match(/^js\d+_(\S+)/);
+                if (match) {
+                    const deviceKey = match[0].split('_')[0]; // e.g., 'js1'
+                    if (!keybinds[deviceKey]) {
+                        keybinds[deviceKey] = {};
+                    }
+                    keybinds[deviceKey][actionName] = input;
+                }
             }
         }
     }
     return keybinds;
 }
 
-function displayKeybinds(keybinds) {
+function getProductNames(xml) {
+    const products = {};
+    const options = xml.getElementsByTagName('options');
+    for (let i = 0; i < options.length; i++) {
+        const type = options[i].getAttribute('type');
+        const instance = options[i].getAttribute('instance');
+        const product = options[i].getAttribute('Product');
+        if (type === 'joystick') {
+            products[`js${instance}`] = product.replace(/\s*{[^}]+}\s*$/, '').trim();
+        }
+    }
+    return products;
+}
+
+function displayKeybinds(keybinds, productNames) {
     const output = document.getElementById('output');
     output.innerHTML = '';
+
+    let tableIndex = 1;
+    for (const [jsKey, keybind] of Object.entries(keybinds)) {
+        const title = productNames[jsKey] || `Joystick ${jsKey.slice(2)}`;
+        output.appendChild(createTable(`table-${tableIndex}`, title, keybind));
+        tableIndex++;
+    }
+}
+
+function createTable(id, title, keybinds) {
+    const container = document.createElement('div');
+    container.className = 'table-container';
+    container.id = id; // Assign the unique ID
+
+    const tableTitle = document.createElement('h2');
+    tableTitle.textContent = title;
+    container.appendChild(tableTitle);
 
     const table = document.createElement('table');
     const thead = document.createElement('thead');
@@ -65,5 +104,7 @@ function displayKeybinds(keybinds) {
     }
 
     table.appendChild(tbody);
-    output.appendChild(table);
+    container.appendChild(table);
+
+    return container;
 }
