@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         const rebinds = action.getElementsByTagName('rebind');
                         let selectedInput = '';
+						let inputNumber = '';
 
                         // Find the first input that isn't 'kb<number>_' prefix
                         for (let l = 0; l < rebinds.length; l++) {
@@ -61,9 +62,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 continue;
                             }
 
-                            // Remove 'js<number>_' prefix
+                            // Remove 'js<number>_' prefix and get device number
                             if (input.startsWith('js')) {
-                                input = input.substring(input.indexOf('_') + 1).trim();
+								let index = input.indexOf('_');
+								inputNumber = input.substring(index - 1,index);
+                                input = input.substring(index + 1).trim();
                             }
 
                             selectedInput = input;
@@ -75,8 +78,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             continue;
                         }
 
-                        // Add action and selected input to the device's keybinds
-                        devices[deviceName][actionName] = selectedInput;
+                        // Add action and selected input to the correct device's keybinds
+						if (instance == inputNumber) {
+							devices[deviceName][actionName] = selectedInput;
+						}
                     }
                 }
             }
