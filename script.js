@@ -58,10 +58,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         const rebinds = action.getElementsByTagName('rebind');
                         let selectedInput = '';
 						let inputNumber = '';
+						let mode;
+						let tapCount;
 
                         // Find the first input that isn't 'kb<number>_' prefix
                         for (let l = 0; l < rebinds.length; l++) {
+							
+							// read input and chack for activationMode and tapCount
                             let input = rebinds[l].getAttribute('input');
+							mode = rebinds[l].getAttribute('activationMode');
+							tapCount = rebinds[l].getAttribute('multiTap');
 
                             // Ignore if input starts with 'kb<number>_'
                             if (input.startsWith('kb')) {
@@ -89,6 +95,16 @@ document.addEventListener('DOMContentLoaded', function() {
 							devices[deviceName].actions[actionId] = {};
 							devices[deviceName].actions[actionId].inputId = selectedInput;
 							devices[deviceName].actions[actionId].inputName = capitalizeWords(selectedInput.replaceAll("_"," "));
+							// Check if mode exists for the action and add the mode
+							if (mode) {
+								devices[deviceName].actions[actionId].mode = mode;
+								devices[deviceName].actions[actionId].modeName = capitalizeWords(mode.replaceAll("_"," "));
+							}
+							if (tapCount) {
+								devices[deviceName].actions[actionId].mode = 'multiTap'
+								devices[deviceName].actions[actionId].tapCount = tapCount
+								devices[deviceName].actions[actionId].modeName = capitalizeWords('multiTap').concat(" (",tapCount,")");
+							}
 						}
                     }
                 }
@@ -137,12 +153,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const headerRow = document.createElement('tr');
         const keyHeader = document.createElement('th');
         const valueHeader = document.createElement('th');
+		const modHeader = document.createElement('th');
 
         keyHeader.textContent = 'Key';
         valueHeader.textContent = 'Value';
+		modHeader.textContent = 'Modifier';
 
         headerRow.appendChild(keyHeader);
         headerRow.appendChild(valueHeader);
+		headerRow.appendChild(modHeader);
         thead.appendChild(headerRow);
         table.appendChild(thead);
 
@@ -150,12 +169,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const row = document.createElement('tr');
             const keyCell = document.createElement('td');
             const valueCell = document.createElement('td');
+			const modCell = document.createElement('td');
 
             keyCell.textContent = translate(action);
             valueCell.textContent = input.inputName;
+			modCell.textContent = input.modeName;
 
             row.appendChild(keyCell);
             row.appendChild(valueCell);
+			row.appendChild(modCell);
             tbody.appendChild(row);
         }
 
