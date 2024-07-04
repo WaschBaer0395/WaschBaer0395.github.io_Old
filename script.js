@@ -11,17 +11,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
 
+			// Create device object
             const devices = {};
 
-            // Iterate over each <options> element in the XML
+			/*
+            * Iterate over each <options> element in the XML
+			* They contain the device names and their corresponding index 
+			*/
             const options = xmlDoc.getElementsByTagName('options');
             for (let i = 0; i < options.length; i++) {
                 const type = options[i].getAttribute('type');
                 const instance = options[i].getAttribute('instance');
                 const product = options[i].getAttribute('Product');
 
-                // Ignore keyboard type
-                if (type === 'keyboard') {
+                // Ignore keyboard or mouse type - we might change this for a more sophisticated approach
+                if (type === 'keyboard' || type === 'mouse') {
                     continue;
                 }
 
@@ -31,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Initialize device if not already present
                 if (!devices[deviceName]) {
                     devices[deviceName] = {};
+					devices[deviceName].actions = {};
                 }
 
                 // Iterate over <action> elements under <actionmap>
@@ -42,10 +47,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     const actions = actionmap.getElementsByTagName('action');
                     for (let k = 0; k < actions.length; k++) {
                         const action = actions[k];
-                        const actionName = action.getAttribute('name');
-
+                        const actionId = action.getAttribute('name');
+						
                         // Check if action already exists for the device
-                        if (devices[deviceName][actionName]) {
+                        if (devices[deviceName].actions[actionId]) {
                             continue; // Skip if action already has an input
                         }
 
@@ -80,7 +85,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         // Add action and selected input to the correct device's keybinds
 						if (instance == inputNumber) {
-							devices[deviceName][actionName] = selectedInput;
+							devices[deviceName].actions[actionId] = {};
+							devices[deviceName].actions[actionId].inputId = selectedInput;
+							devices[deviceName].actions[actionId].inputName = capitalizeWords(selectedInput.replaceAll("_"," "));
 						}
                     }
                 }
@@ -97,23 +104,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const outputDiv = document.getElementById('output');
         outputDiv.innerHTML = ''; // Clear previous content
 
-        // Loop through each device and create a table for its keybinds
+        // Loop through each device and create a table for its keybinded actions
         for (const deviceName in devices) {
             if (devices.hasOwnProperty(deviceName)) {
-                const keybinds = devices[deviceName];
+                const actions = devices[deviceName].actions;
 
                 // Check if device has any valid keybinds
-                if (Object.keys(keybinds).length === 0) {
-                    continue; // Skip devices with no valid keybinds
+                if (Object.keys(actions).length === 0) {
+                    continue; // Skip devices with no valid actions
                 }
-
-                const table = createTable(deviceName, keybinds);
+				
+                const table = createTable(deviceName, actions);
                 outputDiv.appendChild(table);
             }
         }
     }
 
-    function createTable(title, keybinds) {
+    function createTable(title, actions) {
         const container = document.createElement('div');
         container.className = 'table-container';
 
@@ -137,13 +144,13 @@ document.addEventListener('DOMContentLoaded', function() {
         thead.appendChild(headerRow);
         table.appendChild(thead);
 
-        for (const [action, input] of Object.entries(keybinds)) {
+        for (const [action, input] of Object.entries(actions)) {
             const row = document.createElement('tr');
             const keyCell = document.createElement('td');
             const valueCell = document.createElement('td');
 
-            keyCell.textContent = action;
-            valueCell.textContent = input;
+            keyCell.textContent = translate(action);
+            valueCell.textContent = input.inputName;
 
             row.appendChild(keyCell);
             row.appendChild(valueCell);
@@ -155,4 +162,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
         return container;
     }
+	
+	
+	// Placeholder function that should translate the english id to the corresponding english/german/etc. word
+	function translate(id) {
+		id = id.replace("v_","").replaceAll("_"," ");
+		return capitalizeWords(id);
+	}
+	
+	// function to capitalize a whole sentence (fo
+	function capitalizeWords(sentence) {
+		words = sentence.split(" ")
+		for (let i = 0; i < words.length; i++) {
+			words[i] = capitalize(words[i])
+		}
+		return words.join(" ");
+	}
+	
+	function capitalize(word) {
+		return word[0].toUpperCase() + word.substr(1);
+	}
+	
 });
