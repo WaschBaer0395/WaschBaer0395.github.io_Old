@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!devices[deviceName]) {
                     devices[deviceName] = {};
 					devices[deviceName].actions = {};
+					devices[deviceName].index = instance;
                 }
 
                 // Iterate over <action> elements under <actionmap>
@@ -107,14 +108,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Loop through each device and create a table for its keybinded actions
         for (const deviceName in devices) {
             if (devices.hasOwnProperty(deviceName)) {
-                const actions = devices[deviceName].actions;
-
+				const actions = devices[deviceName].actions;
+				
                 // Check if device has any valid keybinds
                 if (Object.keys(actions).length === 0) {
                     continue; // Skip devices with no valid actions
                 }
 				
-                const table = createTable(deviceName, actions);
+				const title = deviceName.concat(" (",devices[deviceName].index,")")
+                const table = createTable(title, actions);
                 outputDiv.appendChild(table);
             }
         }
