@@ -325,4 +325,16 @@ document.addEventListener('DOMContentLoaded', function() {
 		return sortedObj
 	}
 	
+	
+	
 });
+
+function flipFlexDirection() {
+	const output = document.getElementById("output");
+	const style = window.getComputedStyle(output);
+	if (style.getPropertyValue('flex-direction') === "row") {
+		output.style['flex-direction'] = "row-reverse";
+	} else {
+		output.style['flex-direction'] = "row";
+	}
+}
