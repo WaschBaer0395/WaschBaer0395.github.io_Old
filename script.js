@@ -247,14 +247,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const actionHeader = document.createElement('th');
         const inputHeader = document.createElement('th');
 		const modHeader = document.createElement('th');
+		const catHeader = document.createElement('th');
+		
 
 		inputHeader.textContent = 'Input';
 		modHeader.textContent = 'Modifier';
         actionHeader.textContent = 'Action';
+		catHeader.textContent = 'Category';
 
         headerRow.appendChild(inputHeader);
 		headerRow.appendChild(modHeader);
 		headerRow.appendChild(actionHeader);
+		headerRow.appendChild(catHeader);
         thead.appendChild(headerRow);
         table.appendChild(thead);
 
@@ -264,6 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				const inputCell = document.createElement('td');
 				const modCell = document.createElement('td');
 				const actionCell = document.createElement('td');
+				const catCell = document.createElement('td');
 
 				inputCell.textContent = translate(input);
 				modCell.textContent = "";
@@ -272,10 +277,12 @@ document.addEventListener('DOMContentLoaded', function() {
 					else modCell.textContent = translate(value.mode)
 				}
 				actionCell.textContent = translate(action);
+				catCell.textContent = translate(value.category);
 
 				row.appendChild(inputCell);
 				row.appendChild(modCell);
 				row.appendChild(actionCell);
+				row.appendChild(catCell);
 				tbody.appendChild(row);
 			}
         }
