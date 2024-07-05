@@ -35,8 +35,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Initialize device if not already present
                 if (!devices[deviceName]) {
                     devices[deviceName] = {};
-					devices[deviceName].actions = {};
 					devices[deviceName].index = instance;
+					devices[deviceName].actions = {};
+					devices[deviceName].inputs = {};
                 }
 
                 // Iterate over <action> elements under <actionmap>
@@ -56,8 +57,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
 
                         const rebinds = action.getElementsByTagName('rebind');
-                        let selectedInput = '';
-						let inputNumber = '';
+                        let inputId = '';
+						let deviceIndex = '';
 						let mode;
 						let tapCount;
 
@@ -77,49 +78,70 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Remove 'js<number>_' prefix and get device number
                             if (input.startsWith('js')) {
 								let index = input.indexOf('_');
-								inputNumber = input.substring(index - 1,index);
+								deviceIndex = input.substring(index - 1,index);
                                 input = input.substring(index + 1).trim();
                             }
 
-                            selectedInput = input;
+                            inputId = input;
                             break;
                         }
 
                         // Skip action if no valid input found
-                        if (!selectedInput) {
+                        if (!inputId) {
                             continue;
                         }
 
                         // Add action and selected input to the correct device's keybinds
-						if (instance == inputNumber) {
+						if (instance == deviceIndex) {
+							
+							
+							// Fill the dictionary the way around: action -> input & modifier
 							devices[deviceName].actions[actionId] = {};
-							devices[deviceName].actions[actionId].inputId = selectedInput;
-							devices[deviceName].actions[actionId].inputName = capitalizeWords(selectedInput.replaceAll("_"," "));
+							devices[deviceName].actions[actionId].inputId = inputId;
+							devices[deviceName].actions[actionId].inputName = capitalizeWords(inputId.replaceAll("_"," "));
 							// Check if mode exists for the action and add the mode
 							if (mode) {
 								devices[deviceName].actions[actionId].mode = mode;
 								devices[deviceName].actions[actionId].modeName = capitalizeWords(mode.replaceAll("_"," "));
 							}
 							if (tapCount) {
-								devices[deviceName].actions[actionId].mode = 'multiTap'
+								mode = 'multiTap'
+								devices[deviceName].actions[actionId].mode = mode;
 								devices[deviceName].actions[actionId].tapCount = tapCount
 								devices[deviceName].actions[actionId].modeName = capitalizeWords('multiTap').concat(" (",tapCount,")");
+							}
+							
+							// Fill the dictionary the other way around: input -> action -> modifier 
+							if (!devices[deviceName].inputs[inputId]) {
+								devices[deviceName].inputs[inputId] = {}
+							}
+							if (!devices[deviceName].inputs[inputId][actionId]) {
+								devices[deviceName].inputs[inputId][actionId] = {
+									"mode": mode,
+									"tapCount": tapCount
+								}
 							}
 						}
                     }
                 }
             }
 
-            // Display tables for each device
-            displayDeviceTables(devices);
+			// Display tables for each device
+			displayTables(devices)
         };
 
         reader.readAsText(file);
     }
+	
+	function displayTables(devices) {
+		const outputDiv = document.getElementById('output');
+		outputDiv.innerHTML = ''; // Clear previous content
+		// Display tables for each device
+		//displayActionTables(devices, outputDiv); // Here you can uncomment to show the action table
+		displayInputTables(devices, outputDiv);
+	}
 
-    function displayDeviceTables(devices) {
-        const outputDiv = document.getElementById('output');
-        outputDiv.innerHTML = ''; // Clear previous content
+    function displayActionTables(devices, outputDiv) {
 
         // Loop through each device and create a table for its keybinded actions
         for (const deviceName in devices) {
@@ -132,13 +154,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 				
 				const title = deviceName.concat(" (",devices[deviceName].index,")")
-                const table = createTable(title, actions);
+                const table = createActionTable(title, actions);
+                outputDiv.appendChild(table);
+            }
+        }
+    }
+	
+	function displayInputTables(devices, outputDiv) {
+        // Loop through each device and create a table for its keybinded actions
+        for (const deviceName in devices) {
+            if (devices.hasOwnProperty(deviceName)) {
+				const inputs = devices[deviceName].inputs;
+				
+                // Check if device has any valid keybinds
+                if (Object.keys(inputs).length === 0) {
+                    continue; // Skip devices with no valid actions
+                }
+				
+				const title = deviceName.concat(" (",devices[deviceName].index,")")
+                const table = createInputTable(title, inputs);
                 outputDiv.appendChild(table);
             }
         }
     }
 
-    function createTable(title, actions) {
+    function createActionTable(title, content) {
         const container = document.createElement('div');
         container.className = 'table-container';
 
@@ -151,21 +191,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const tbody = document.createElement('tbody');
 
         const headerRow = document.createElement('tr');
-        const keyHeader = document.createElement('th');
-        const valueHeader = document.createElement('th');
+        const actionHeader = document.createElement('th');
+        const inputHeader = document.createElement('th');
 		const modHeader = document.createElement('th');
 
-        keyHeader.textContent = 'Key';
-        valueHeader.textContent = 'Value';
+        actionHeader.textContent = 'Action';
+        inputHeader.textContent = 'Input';
 		modHeader.textContent = 'Modifier';
 
-        headerRow.appendChild(keyHeader);
-        headerRow.appendChild(valueHeader);
+        headerRow.appendChild(actionHeader);
+        headerRow.appendChild(inputHeader);
 		headerRow.appendChild(modHeader);
         thead.appendChild(headerRow);
         table.appendChild(thead);
 
-        for (const [action, input] of Object.entries(actions)) {
+        for (const [action, input] of Object.entries(content)) {
             const row = document.createElement('tr');
             const keyCell = document.createElement('td');
             const valueCell = document.createElement('td');
@@ -179,6 +219,61 @@ document.addEventListener('DOMContentLoaded', function() {
             row.appendChild(valueCell);
 			row.appendChild(modCell);
             tbody.appendChild(row);
+        }
+
+        table.appendChild(tbody);
+        container.appendChild(table);
+
+        return container;
+    }
+	
+	function createInputTable(title, content) {
+        const container = document.createElement('div');
+        container.className = 'table-container';
+
+        const tableTitle = document.createElement('h2');
+        tableTitle.textContent = title;
+        container.appendChild(tableTitle);
+
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+
+        const headerRow = document.createElement('tr');
+        const actionHeader = document.createElement('th');
+        const inputHeader = document.createElement('th');
+		const modHeader = document.createElement('th');
+
+		inputHeader.textContent = 'Input';
+		modHeader.textContent = 'Modifier';
+        actionHeader.textContent = 'Action';
+
+        headerRow.appendChild(inputHeader);
+		headerRow.appendChild(modHeader);
+		headerRow.appendChild(actionHeader);
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        for (const [input, actions] of Object.entries(content)) {
+			for (const [action, value] of Object.entries(actions)) {
+				const row = document.createElement('tr');
+				const inputCell = document.createElement('td');
+				const modCell = document.createElement('td');
+				const actionCell = document.createElement('td');
+
+				inputCell.textContent = translate(input);
+				modCell.textContent = "";
+				if (value.mode) {
+					if(value.tapCount) modCell.textContent = translate(value.mode).concat(" (",value.tapCount,")");
+					else modCell.textContent = translate(value.mode)
+				}
+				actionCell.textContent = translate(action);
+
+				row.appendChild(inputCell);
+				row.appendChild(modCell);
+				row.appendChild(actionCell);
+				tbody.appendChild(row);
+			}
         }
 
         table.appendChild(tbody);
