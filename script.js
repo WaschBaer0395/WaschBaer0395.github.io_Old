@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 			// Create device object
             const devices = {};
+			
 
 			/*
             * Iterate over each <options> element in the XML
@@ -31,13 +32,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Extract device name without GUID
                 const deviceName = product.split('{')[0].trim();
-
+				const unsortedInputs = {};
                 // Initialize device if not already present
                 if (!devices[deviceName]) {
                     devices[deviceName] = {};
 					devices[deviceName].index = instance;
 					devices[deviceName].actions = {};
-					devices[deviceName].inputs = {};
+					//devices[deviceName].inputs = {};
                 }
 
                 // Iterate over <action> elements under <actionmap>
@@ -99,6 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
 							devices[deviceName].actions[actionId] = {};
 							devices[deviceName].actions[actionId].inputId = inputId;
 							devices[deviceName].actions[actionId].inputName = capitalizeWords(inputId.replaceAll("_"," "));
+							devices[deviceName].actions[actionId].category = actionmapName
 							// Check if mode exists for the action and add the mode
 							if (mode) {
 								devices[deviceName].actions[actionId].mode = mode;
@@ -112,20 +114,22 @@ document.addEventListener('DOMContentLoaded', function() {
 							}
 							
 							// Fill the dictionary the other way around: input -> action -> modifier 
-							if (!devices[deviceName].inputs[inputId]) {
-								devices[deviceName].inputs[inputId] = {}
+							if (!unsortedInputs[inputId]) {
+								unsortedInputs[inputId] = {}
 							}
-							if (!devices[deviceName].inputs[inputId][actionId]) {
-								devices[deviceName].inputs[inputId][actionId] = {
+							if (!unsortedInputs[inputId][actionId]) {
+								unsortedInputs[inputId][actionId] = {
 									"mode": mode,
-									"tapCount": tapCount
+									"tapCount": tapCount,
+									"category": actionmapName
 								}
 							}
 						}
                     }
                 }
+				devices[deviceName].inputs = sortObjectByElements(unsortedInputs);
             }
-
+			
 			// Display tables for each device
 			displayTables(devices)
         };
@@ -291,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	// function to capitalize a whole sentence (fo
 	function capitalizeWords(sentence) {
-		words = sentence.split(" ")
+		const words = sentence.split(" ")
 		for (let i = 0; i < words.length; i++) {
 			words[i] = capitalize(words[i])
 		}
@@ -300,6 +304,18 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	function capitalize(word) {
 		return word[0].toUpperCase() + word.substr(1);
+	}
+	
+	function sortObjectByElements(obj) {
+		const sortedObj = {}
+		const keys = Object.keys(obj);
+		const sortedKeys = keys.sort(new Intl.Collator('en',{numeric:true, sensitivity:'accent'}).compare)
+		console.log(sortedKeys)
+		for (key in sortedKeys) {
+			sortedObj[sortedKeys[key]] = obj[sortedKeys[key]]
+			console.log(sortedKeys[key])
+		}
+		return sortedObj
 	}
 	
 });
