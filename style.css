@@ -38,7 +38,10 @@ header h1 {
 
 .tables-container {
     display: flex;
-    flex-wrap: nowrap;
+	flex-wrap: nowrap;
+    /* Added following line to order
+    tables from right to left */
+	flex-direction: row-reverse;
 }
 
 .table-container {
